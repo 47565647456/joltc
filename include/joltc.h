@@ -137,6 +137,9 @@ typedef struct JPH_CollideShapeResult					JPH_CollideShapeResult;
 typedef struct JPH_ContactListener						JPH_ContactListener;
 typedef struct JPH_ContactManifold						JPH_ContactManifold;
 
+typedef struct JPH_ContactEventCollector				JPH_ContactEventCollector;
+typedef struct JPH_ActivationEventCollector				JPH_ActivationEventCollector;
+
 typedef struct JPH_GroupFilter							JPH_GroupFilter;
 typedef struct JPH_GroupFilterTable						JPH_GroupFilterTable;  /* Inherits JPH_GroupFilter */
 
@@ -1879,6 +1882,37 @@ JPH_CAPI const JPH_PhysicsMaterial* JPH_BodyInterface_GetMaterial(JPH_BodyInterf
 JPH_CAPI void JPH_BodyInterface_InvalidateContactCache(JPH_BodyInterface* bodyInterface, JPH_BodyID bodyId);
 
 //--------------------------------------------------------------------------------------------------
+// JPH_BodyInterface Batch Operations
+//--------------------------------------------------------------------------------------------------
+
+/* Batch transform read/write */
+JPH_CAPI void JPH_BodyInterface_GetPositionsAndRotations(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count, JPH_RVec3* outPositions, JPH_Quat* outRotations);
+JPH_CAPI void JPH_BodyInterface_SetPositionsAndRotations(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count, const JPH_RVec3* positions, const JPH_Quat* rotations, JPH_Activation activationMode);
+
+/* Batch velocity read/write */
+JPH_CAPI void JPH_BodyInterface_GetLinearAndAngularVelocities(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count, JPH_Vec3* outLinearVelocities, JPH_Vec3* outAngularVelocities);
+JPH_CAPI void JPH_BodyInterface_SetLinearAndAngularVelocities(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count, const JPH_Vec3* linearVelocities, const JPH_Vec3* angularVelocities);
+
+/* Batch full state read/write (position + rotation + linear velocity + angular velocity) */
+JPH_CAPI void JPH_BodyInterface_GetTransformsAndVelocities(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count, JPH_RVec3* outPositions, JPH_Quat* outRotations, JPH_Vec3* outLinearVelocities, JPH_Vec3* outAngularVelocities);
+JPH_CAPI void JPH_BodyInterface_SetPositionRotationAndVelocities(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count, const JPH_RVec3* positions, const JPH_Quat* rotations, const JPH_Vec3* linearVelocities, const JPH_Vec3* angularVelocities);
+
+/* Batch force/impulse application */
+JPH_CAPI void JPH_BodyInterface_AddForces(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count, const JPH_Vec3* forces);
+JPH_CAPI void JPH_BodyInterface_AddTorques(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count, const JPH_Vec3* torques);
+JPH_CAPI void JPH_BodyInterface_AddForcesAndTorques(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count, const JPH_Vec3* forces, const JPH_Vec3* torques);
+JPH_CAPI void JPH_BodyInterface_AddImpulses(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count, const JPH_Vec3* impulses);
+JPH_CAPI void JPH_BodyInterface_AddAngularImpulses(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count, const JPH_Vec3* angularImpulses);
+
+/* Batch body lifecycle */
+JPH_CAPI void JPH_BodyInterface_AddBodies(JPH_BodyInterface* bodyInterface, JPH_BodyID* bodyIDs, uint32_t count, JPH_Activation activationMode);
+JPH_CAPI void JPH_BodyInterface_RemoveBodies(JPH_BodyInterface* bodyInterface, JPH_BodyID* bodyIDs, uint32_t count);
+JPH_CAPI void JPH_BodyInterface_DestroyBodies(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count);
+
+/* Batch kinematic move */
+JPH_CAPI void JPH_BodyInterface_MoveKinematics(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count, const JPH_RVec3* targetPositions, const JPH_Quat* targetRotations, float deltaTime);
+
+//--------------------------------------------------------------------------------------------------
 // JPH_BodyLockInterface
 //--------------------------------------------------------------------------------------------------
 JPH_CAPI void JPH_BodyLockInterface_LockRead(const JPH_BodyLockInterface* lockInterface, JPH_BodyID bodyID, JPH_BodyLockRead* outLock);
@@ -2246,6 +2280,53 @@ typedef struct JPH_BodyActivationListener_Procs {
 JPH_CAPI void JPH_BodyActivationListener_SetProcs(const JPH_BodyActivationListener_Procs* procs);
 JPH_CAPI JPH_BodyActivationListener* JPH_BodyActivationListener_Create(void* userData);
 JPH_CAPI void JPH_BodyActivationListener_Destroy(JPH_BodyActivationListener* listener);
+
+//--------------------------------------------------------------------------------------------------
+// JPH_ContactEventCollector - native-side contact event buffer
+//--------------------------------------------------------------------------------------------------
+typedef enum JPH_ContactEventType {
+	JPH_ContactEventType_Added = 0,
+	JPH_ContactEventType_Persisted = 1,
+	JPH_ContactEventType_Removed = 2,
+
+	_JPH_ContactEventType_Count,
+	_JPH_ContactEventType_Force32 = 0x7fffffff
+} JPH_ContactEventType;
+
+typedef struct JPH_ContactEventData {
+	JPH_BodyID body1ID;
+	JPH_BodyID body2ID;
+	JPH_Vec3 contactNormal;
+	float penetrationDepth;
+	JPH_ContactEventType eventType;
+	uint32_t pointCount;
+	JPH_RVec3 contactPoints[4];
+} JPH_ContactEventData;
+
+JPH_CAPI JPH_ContactEventCollector* JPH_ContactEventCollector_Create(uint32_t initialCapacity);
+JPH_CAPI void JPH_ContactEventCollector_Destroy(JPH_ContactEventCollector* collector);
+JPH_CAPI void JPH_ContactEventCollector_SetOnPhysicsSystem(JPH_ContactEventCollector* collector, JPH_PhysicsSystem* system);
+JPH_CAPI uint32_t JPH_ContactEventCollector_DrainEvents(JPH_ContactEventCollector* collector, JPH_ContactEventData* outEvents, uint32_t maxEvents);
+JPH_CAPI uint32_t JPH_ContactEventCollector_GetEventCount(const JPH_ContactEventCollector* collector);
+JPH_CAPI void JPH_ContactEventCollector_Clear(JPH_ContactEventCollector* collector);
+JPH_CAPI void JPH_ContactEventCollector_SetEventFilter(JPH_ContactEventCollector* collector, uint32_t eventTypeMask);
+
+//--------------------------------------------------------------------------------------------------
+// JPH_ActivationEventCollector - native-side body activation event buffer
+//--------------------------------------------------------------------------------------------------
+typedef struct JPH_ActivationEventData {
+	JPH_BodyID bodyID;
+	uint64_t bodyUserData;
+	uint32_t activated; /* 1 = activated, 0 = deactivated */
+	uint32_t _padding;
+} JPH_ActivationEventData;
+
+JPH_CAPI JPH_ActivationEventCollector* JPH_ActivationEventCollector_Create(uint32_t initialCapacity);
+JPH_CAPI void JPH_ActivationEventCollector_Destroy(JPH_ActivationEventCollector* collector);
+JPH_CAPI void JPH_ActivationEventCollector_SetOnPhysicsSystem(JPH_ActivationEventCollector* collector, JPH_PhysicsSystem* system);
+JPH_CAPI uint32_t JPH_ActivationEventCollector_DrainEvents(JPH_ActivationEventCollector* collector, JPH_ActivationEventData* outEvents, uint32_t maxEvents);
+JPH_CAPI uint32_t JPH_ActivationEventCollector_GetEventCount(const JPH_ActivationEventCollector* collector);
+JPH_CAPI void JPH_ActivationEventCollector_Clear(JPH_ActivationEventCollector* collector);
 
 /* JPH_BodyDrawFilter */
 typedef struct JPH_BodyDrawFilter_Procs {

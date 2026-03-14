@@ -5958,6 +5958,182 @@ void JPH_BodyInterface_InvalidateContactCache(JPH_BodyInterface* bodyInterface, 
 }
 
 //--------------------------------------------------------------------------------------------------
+// JPH_BodyInterface Batch Operations
+//--------------------------------------------------------------------------------------------------
+
+void JPH_BodyInterface_GetPositionsAndRotations(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count, JPH_RVec3* outPositions, JPH_Quat* outRotations)
+{
+	auto iface = AsBodyInterface(bodyInterface);
+	for (uint32_t i = 0; i < count; ++i)
+	{
+		JPH::RVec3 pos;
+		JPH::Quat rot;
+		iface->GetPositionAndRotation(JPH::BodyID(bodyIDs[i]), pos, rot);
+		FromJolt(pos, &outPositions[i]);
+		FromJolt(rot, &outRotations[i]);
+	}
+}
+
+void JPH_BodyInterface_SetPositionsAndRotations(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count, const JPH_RVec3* positions, const JPH_Quat* rotations, JPH_Activation activationMode)
+{
+	auto iface = AsBodyInterface(bodyInterface);
+	auto activation = static_cast<JPH::EActivation>(activationMode);
+	for (uint32_t i = 0; i < count; ++i)
+	{
+		iface->SetPositionAndRotation(JPH::BodyID(bodyIDs[i]), ToJolt(&positions[i]), ToJolt(&rotations[i]), activation);
+	}
+}
+
+void JPH_BodyInterface_GetLinearAndAngularVelocities(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count, JPH_Vec3* outLinearVelocities, JPH_Vec3* outAngularVelocities)
+{
+	auto iface = AsBodyInterface(bodyInterface);
+	for (uint32_t i = 0; i < count; ++i)
+	{
+		JPH::Vec3 linVel, angVel;
+		iface->GetLinearAndAngularVelocity(JPH::BodyID(bodyIDs[i]), linVel, angVel);
+		FromJolt(linVel, &outLinearVelocities[i]);
+		FromJolt(angVel, &outAngularVelocities[i]);
+	}
+}
+
+void JPH_BodyInterface_SetLinearAndAngularVelocities(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count, const JPH_Vec3* linearVelocities, const JPH_Vec3* angularVelocities)
+{
+	auto iface = AsBodyInterface(bodyInterface);
+	for (uint32_t i = 0; i < count; ++i)
+	{
+		iface->SetLinearAndAngularVelocity(JPH::BodyID(bodyIDs[i]), ToJolt(&linearVelocities[i]), ToJolt(&angularVelocities[i]));
+	}
+}
+
+void JPH_BodyInterface_GetTransformsAndVelocities(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count, JPH_RVec3* outPositions, JPH_Quat* outRotations, JPH_Vec3* outLinearVelocities, JPH_Vec3* outAngularVelocities)
+{
+	auto iface = AsBodyInterface(bodyInterface);
+	for (uint32_t i = 0; i < count; ++i)
+	{
+		JPH::RVec3 pos;
+		JPH::Quat rot;
+		JPH::Vec3 linVel, angVel;
+		JPH::BodyID id(bodyIDs[i]);
+		iface->GetPositionAndRotation(id, pos, rot);
+		iface->GetLinearAndAngularVelocity(id, linVel, angVel);
+		FromJolt(pos, &outPositions[i]);
+		FromJolt(rot, &outRotations[i]);
+		FromJolt(linVel, &outLinearVelocities[i]);
+		FromJolt(angVel, &outAngularVelocities[i]);
+	}
+}
+
+void JPH_BodyInterface_SetPositionRotationAndVelocities(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count, const JPH_RVec3* positions, const JPH_Quat* rotations, const JPH_Vec3* linearVelocities, const JPH_Vec3* angularVelocities)
+{
+	auto iface = AsBodyInterface(bodyInterface);
+	for (uint32_t i = 0; i < count; ++i)
+	{
+		JPH::BodyID id(bodyIDs[i]);
+		iface->SetPositionAndRotation(id, ToJolt(&positions[i]), ToJolt(&rotations[i]), JPH::EActivation::DontActivate);
+		iface->SetLinearAndAngularVelocity(id, ToJolt(&linearVelocities[i]), ToJolt(&angularVelocities[i]));
+	}
+}
+
+void JPH_BodyInterface_AddForces(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count, const JPH_Vec3* forces)
+{
+	auto iface = AsBodyInterface(bodyInterface);
+	for (uint32_t i = 0; i < count; ++i)
+	{
+		iface->AddForce(JPH::BodyID(bodyIDs[i]), ToJolt(&forces[i]));
+	}
+}
+
+void JPH_BodyInterface_AddTorques(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count, const JPH_Vec3* torques)
+{
+	auto iface = AsBodyInterface(bodyInterface);
+	for (uint32_t i = 0; i < count; ++i)
+	{
+		iface->AddTorque(JPH::BodyID(bodyIDs[i]), ToJolt(&torques[i]));
+	}
+}
+
+void JPH_BodyInterface_AddForcesAndTorques(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count, const JPH_Vec3* forces, const JPH_Vec3* torques)
+{
+	auto iface = AsBodyInterface(bodyInterface);
+	for (uint32_t i = 0; i < count; ++i)
+	{
+		iface->AddForceAndTorque(JPH::BodyID(bodyIDs[i]), ToJolt(&forces[i]), ToJolt(&torques[i]));
+	}
+}
+
+void JPH_BodyInterface_AddImpulses(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count, const JPH_Vec3* impulses)
+{
+	auto iface = AsBodyInterface(bodyInterface);
+	for (uint32_t i = 0; i < count; ++i)
+	{
+		iface->AddImpulse(JPH::BodyID(bodyIDs[i]), ToJolt(&impulses[i]));
+	}
+}
+
+void JPH_BodyInterface_AddAngularImpulses(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count, const JPH_Vec3* angularImpulses)
+{
+	auto iface = AsBodyInterface(bodyInterface);
+	for (uint32_t i = 0; i < count; ++i)
+	{
+		iface->AddAngularImpulse(JPH::BodyID(bodyIDs[i]), ToJolt(&angularImpulses[i]));
+	}
+}
+
+void JPH_BodyInterface_AddBodies(JPH_BodyInterface* bodyInterface, JPH_BodyID* bodyIDs, uint32_t count, JPH_Activation activationMode)
+{
+	auto iface = AsBodyInterface(bodyInterface);
+	auto activation = static_cast<JPH::EActivation>(activationMode);
+
+	// Convert to Jolt BodyID array
+	Array<BodyID> joltBodyIDs;
+	joltBodyIDs.resize(count);
+	for (uint32_t i = 0; i < count; ++i)
+		joltBodyIDs[i] = JPH::BodyID(bodyIDs[i]);
+
+	// Use Jolt's batch add: prepare on background, finalize for broadphase
+	JPH::BodyInterface::AddState addState = iface->AddBodiesPrepare(joltBodyIDs.data(), (int)count);
+	iface->AddBodiesFinalize(joltBodyIDs.data(), (int)count, addState, activation);
+
+	// Write back potentially reordered IDs
+	for (uint32_t i = 0; i < count; ++i)
+		bodyIDs[i] = joltBodyIDs[i].GetIndexAndSequenceNumber();
+}
+
+void JPH_BodyInterface_RemoveBodies(JPH_BodyInterface* bodyInterface, JPH_BodyID* bodyIDs, uint32_t count)
+{
+	auto iface = AsBodyInterface(bodyInterface);
+
+	Array<BodyID> joltBodyIDs;
+	joltBodyIDs.resize(count);
+	for (uint32_t i = 0; i < count; ++i)
+		joltBodyIDs[i] = JPH::BodyID(bodyIDs[i]);
+
+	iface->RemoveBodies(joltBodyIDs.data(), (int)count);
+
+	// Write back potentially reordered IDs
+	for (uint32_t i = 0; i < count; ++i)
+		bodyIDs[i] = joltBodyIDs[i].GetIndexAndSequenceNumber();
+}
+
+void JPH_BodyInterface_DestroyBodies(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count)
+{
+	auto iface = AsBodyInterface(bodyInterface);
+	for (uint32_t i = 0; i < count; ++i)
+	{
+		iface->DestroyBody(JPH::BodyID(bodyIDs[i]));
+	}
+}
+
+void JPH_BodyInterface_MoveKinematics(JPH_BodyInterface* bodyInterface, const JPH_BodyID* bodyIDs, uint32_t count, const JPH_RVec3* targetPositions, const JPH_Quat* targetRotations, float deltaTime)
+{
+	auto iface = AsBodyInterface(bodyInterface);
+	for (uint32_t i = 0; i < count; ++i)
+	{
+		iface->MoveKinematic(JPH::BodyID(bodyIDs[i]), ToJolt(&targetPositions[i]), ToJolt(&targetRotations[i]), deltaTime);
+	}
+}
+
+//--------------------------------------------------------------------------------------------------
 // JPH_BodyLockInterface
 //--------------------------------------------------------------------------------------------------
 void JPH_BodyLockInterface_LockRead(const JPH_BodyLockInterface* lockInterface, JPH_BodyID bodyID, JPH_BodyLockRead* outLock)
@@ -7609,6 +7785,287 @@ void JPH_BodyActivationListener_Destroy(JPH_BodyActivationListener* listener)
 	{
 		delete reinterpret_cast<ManagedBodyActivationListener*>(listener);
 	}
+}
+
+//--------------------------------------------------------------------------------------------------
+// JPH_ContactEventCollector
+//--------------------------------------------------------------------------------------------------
+
+class ContactEventCollector final : public JPH::ContactListener
+{
+public:
+	ContactEventCollector(uint32_t initialCapacity)
+		: eventFilterMask(0x7) // All events by default (Added | Persisted | Removed)
+	{
+		events.reserve(initialCapacity);
+	}
+
+	ValidateResult OnContactValidate(const Body& inBody1, const Body& inBody2,
+		RVec3Arg inBaseOffset, const CollideShapeResult& inCollisionResult) override
+	{
+		return ValidateResult::AcceptAllContactsForThisBodyPair;
+	}
+
+	void OnContactAdded(const Body& inBody1, const Body& inBody2,
+		const ContactManifold& inManifold, ContactSettings& ioSettings) override
+	{
+		if (!(eventFilterMask & (1u << JPH_ContactEventType_Added)))
+			return;
+
+		JPH_ContactEventData evt = {};
+		evt.body1ID = inBody1.GetID().GetIndexAndSequenceNumber();
+		evt.body2ID = inBody2.GetID().GetIndexAndSequenceNumber();
+		FromJolt(inManifold.mWorldSpaceNormal, &evt.contactNormal);
+		evt.penetrationDepth = inManifold.mPenetrationDepth;
+		evt.eventType = JPH_ContactEventType_Added;
+
+		uint32_t numPoints = inManifold.mRelativeContactPointsOn1.size();
+		evt.pointCount = numPoints < 4 ? numPoints : 4;
+		for (uint32_t i = 0; i < evt.pointCount; ++i)
+		{
+			JPH::RVec3 worldPoint = inManifold.GetWorldSpaceContactPointOn1((uint)i);
+			FromJolt(worldPoint, &evt.contactPoints[i]);
+		}
+
+		lock_guard<Mutex> lock(mutex);
+		events.push_back(evt);
+	}
+
+	void OnContactPersisted(const Body& inBody1, const Body& inBody2,
+		const ContactManifold& inManifold, ContactSettings& ioSettings) override
+	{
+		if (!(eventFilterMask & (1u << JPH_ContactEventType_Persisted)))
+			return;
+
+		JPH_ContactEventData evt = {};
+		evt.body1ID = inBody1.GetID().GetIndexAndSequenceNumber();
+		evt.body2ID = inBody2.GetID().GetIndexAndSequenceNumber();
+		FromJolt(inManifold.mWorldSpaceNormal, &evt.contactNormal);
+		evt.penetrationDepth = inManifold.mPenetrationDepth;
+		evt.eventType = JPH_ContactEventType_Persisted;
+
+		uint32_t numPoints = inManifold.mRelativeContactPointsOn1.size();
+		evt.pointCount = numPoints < 4 ? numPoints : 4;
+		for (uint32_t i = 0; i < evt.pointCount; ++i)
+		{
+			JPH::RVec3 worldPoint = inManifold.GetWorldSpaceContactPointOn1((uint)i);
+			FromJolt(worldPoint, &evt.contactPoints[i]);
+		}
+
+		lock_guard<Mutex> lock(mutex);
+		events.push_back(evt);
+	}
+
+	void OnContactRemoved(const SubShapeIDPair& inSubShapePair) override
+	{
+		if (!(eventFilterMask & (1u << JPH_ContactEventType_Removed)))
+			return;
+
+		JPH_ContactEventData evt = {};
+		evt.body1ID = inSubShapePair.GetBody1ID().GetIndexAndSequenceNumber();
+		evt.body2ID = inSubShapePair.GetBody2ID().GetIndexAndSequenceNumber();
+		evt.eventType = JPH_ContactEventType_Removed;
+		evt.pointCount = 0;
+		evt.penetrationDepth = 0.0f;
+
+		lock_guard<Mutex> lock(mutex);
+		events.push_back(evt);
+	}
+
+	uint32_t DrainEvents(JPH_ContactEventData* outEvents, uint32_t maxEvents)
+	{
+		lock_guard<Mutex> lock(mutex);
+		uint32_t count = (uint32_t)events.size();
+		if (count > maxEvents)
+			count = maxEvents;
+		if (count > 0 && outEvents != nullptr)
+		{
+			memcpy(outEvents, events.data(), count * sizeof(JPH_ContactEventData));
+		}
+		if (count == (uint32_t)events.size())
+		{
+			events.clear();
+		}
+		else
+		{
+			events.erase(events.begin(), events.begin() + count);
+		}
+		return count;
+	}
+
+	uint32_t GetEventCount() const
+	{
+		lock_guard<Mutex> lock(mutex);
+		return (uint32_t)events.size();
+	}
+
+	void Clear()
+	{
+		lock_guard<Mutex> lock(mutex);
+		events.clear();
+	}
+
+	void SetEventFilter(uint32_t mask)
+	{
+		eventFilterMask = mask;
+	}
+
+	mutable Mutex mutex;
+	Array<JPH_ContactEventData> events;
+	uint32_t eventFilterMask;
+};
+
+JPH_ContactEventCollector* JPH_ContactEventCollector_Create(uint32_t initialCapacity)
+{
+	auto collector = new ContactEventCollector(initialCapacity);
+	return reinterpret_cast<JPH_ContactEventCollector*>(collector);
+}
+
+void JPH_ContactEventCollector_Destroy(JPH_ContactEventCollector* collector)
+{
+	if (collector)
+	{
+		delete reinterpret_cast<ContactEventCollector*>(collector);
+	}
+}
+
+void JPH_ContactEventCollector_SetOnPhysicsSystem(JPH_ContactEventCollector* collector, JPH_PhysicsSystem* system)
+{
+	auto realCollector = reinterpret_cast<ContactEventCollector*>(collector);
+	system->physicsSystem->SetContactListener(realCollector);
+}
+
+uint32_t JPH_ContactEventCollector_DrainEvents(JPH_ContactEventCollector* collector, JPH_ContactEventData* outEvents, uint32_t maxEvents)
+{
+	auto realCollector = reinterpret_cast<ContactEventCollector*>(collector);
+	return realCollector->DrainEvents(outEvents, maxEvents);
+}
+
+uint32_t JPH_ContactEventCollector_GetEventCount(const JPH_ContactEventCollector* collector)
+{
+	auto realCollector = reinterpret_cast<const ContactEventCollector*>(collector);
+	return realCollector->GetEventCount();
+}
+
+void JPH_ContactEventCollector_Clear(JPH_ContactEventCollector* collector)
+{
+	auto realCollector = reinterpret_cast<ContactEventCollector*>(collector);
+	realCollector->Clear();
+}
+
+void JPH_ContactEventCollector_SetEventFilter(JPH_ContactEventCollector* collector, uint32_t eventTypeMask)
+{
+	auto realCollector = reinterpret_cast<ContactEventCollector*>(collector);
+	realCollector->SetEventFilter(eventTypeMask);
+}
+
+//--------------------------------------------------------------------------------------------------
+// JPH_ActivationEventCollector
+//--------------------------------------------------------------------------------------------------
+
+class ActivationEventCollector final : public JPH::BodyActivationListener
+{
+public:
+	ActivationEventCollector(uint32_t initialCapacity)
+	{
+		events.reserve(initialCapacity);
+	}
+
+	void OnBodyActivated(const BodyID& inBodyID, uint64 inBodyUserData) override
+	{
+		JPH_ActivationEventData evt = {};
+		evt.bodyID = inBodyID.GetIndexAndSequenceNumber();
+		evt.bodyUserData = inBodyUserData;
+		evt.activated = 1;
+
+		lock_guard<Mutex> lock(mutex);
+		events.push_back(evt);
+	}
+
+	void OnBodyDeactivated(const BodyID& inBodyID, uint64 inBodyUserData) override
+	{
+		JPH_ActivationEventData evt = {};
+		evt.bodyID = inBodyID.GetIndexAndSequenceNumber();
+		evt.bodyUserData = inBodyUserData;
+		evt.activated = 0;
+
+		lock_guard<Mutex> lock(mutex);
+		events.push_back(evt);
+	}
+
+	uint32_t DrainEvents(JPH_ActivationEventData* outEvents, uint32_t maxEvents)
+	{
+		lock_guard<Mutex> lock(mutex);
+		uint32_t count = (uint32_t)events.size();
+		if (count > maxEvents)
+			count = maxEvents;
+		if (count > 0 && outEvents != nullptr)
+		{
+			memcpy(outEvents, events.data(), count * sizeof(JPH_ActivationEventData));
+		}
+		if (count == (uint32_t)events.size())
+		{
+			events.clear();
+		}
+		else
+		{
+			events.erase(events.begin(), events.begin() + count);
+		}
+		return count;
+	}
+
+	uint32_t GetEventCount() const
+	{
+		lock_guard<Mutex> lock(mutex);
+		return (uint32_t)events.size();
+	}
+
+	void Clear()
+	{
+		lock_guard<Mutex> lock(mutex);
+		events.clear();
+	}
+
+	mutable Mutex mutex;
+	Array<JPH_ActivationEventData> events;
+};
+
+JPH_ActivationEventCollector* JPH_ActivationEventCollector_Create(uint32_t initialCapacity)
+{
+	auto collector = new ActivationEventCollector(initialCapacity);
+	return reinterpret_cast<JPH_ActivationEventCollector*>(collector);
+}
+
+void JPH_ActivationEventCollector_Destroy(JPH_ActivationEventCollector* collector)
+{
+	if (collector)
+	{
+		delete reinterpret_cast<ActivationEventCollector*>(collector);
+	}
+}
+
+void JPH_ActivationEventCollector_SetOnPhysicsSystem(JPH_ActivationEventCollector* collector, JPH_PhysicsSystem* system)
+{
+	auto realCollector = reinterpret_cast<ActivationEventCollector*>(collector);
+	system->physicsSystem->SetBodyActivationListener(realCollector);
+}
+
+uint32_t JPH_ActivationEventCollector_DrainEvents(JPH_ActivationEventCollector* collector, JPH_ActivationEventData* outEvents, uint32_t maxEvents)
+{
+	auto realCollector = reinterpret_cast<ActivationEventCollector*>(collector);
+	return realCollector->DrainEvents(outEvents, maxEvents);
+}
+
+uint32_t JPH_ActivationEventCollector_GetEventCount(const JPH_ActivationEventCollector* collector)
+{
+	auto realCollector = reinterpret_cast<const ActivationEventCollector*>(collector);
+	return realCollector->GetEventCount();
+}
+
+void JPH_ActivationEventCollector_Clear(JPH_ActivationEventCollector* collector)
+{
+	auto realCollector = reinterpret_cast<ActivationEventCollector*>(collector);
+	realCollector->Clear();
 }
 
 /* ContactManifold */
